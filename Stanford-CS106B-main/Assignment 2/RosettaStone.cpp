@@ -1,50 +1,135 @@
+#include<string>
 #include "RosettaStone.h"
 #include "GUI/SimpleTest.h"
+#include<cmath>
+#include"priorityqueue.h"
 using namespace std;
 
-Map<string, double> kGramsIn(const string& str, int kGramLength) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) str;
-    (void) kGramLength;
-    return {};
+Map<string, double> kGramsIn(const string& str, int kGramLength) {//Map是基于键进行索引的数据类型
+    if(kGramLength <= 0)
+    {
+        error("kGramLength should be positive");
+    }
+    Map<string,double> kGrams;
+    int len = str.length();
+    if(len < kGramLength)//return NULL Maps
+    {
+        return kGrams;
+    }
+    for(int i = 0;i < len-kGramLength+1;i++)
+    {
+        string k_Gram = "";
+        for(int j = 0;j < kGramLength;j++)
+        {
+            k_Gram = k_Gram + str[i+j];
+        }
+        kGrams[k_Gram]++;
+    }
+    return kGrams;
 }
 
 Map<string, double> normalize(const Map<string, double>& input) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) input;
-    return {};
+    int if_allzero = 1;
+    Vector<string> keys = input.keys();
+    int size = keys.size();
+    for(int i = 0;i < size;i++)//check if all key values are zero
+    {
+        if(input[keys[i]] != 0)
+        {
+            if_allzero = 0;
+        }
+    }
+    if(if_allzero)
+    {
+        error("the input is invalid");
+    }
+    else
+    {
+        Map<string,double> output;
+        double sum = 0;
+        for(int i = 0;i < size;i++)
+        {
+            sum += input[keys[i]] * input[keys[i]];
+        }
+        double root = sqrt(sum);
+        for(int i = 0;i < size;i++)
+        {
+            output[keys[i]] = input[keys[i]] / root;
+        }
+        return output;
+    }
 }
 
 Map<string, double> topKGramsIn(const Map<string, double>& source, int numToKeep) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) source;
-    (void) numToKeep;
-    return {};
+    if(numToKeep < 0)
+    {
+        error("numToKeep should be positive");
+    }
+
+    Map<string,double> output;
+    if(numToKeep == 0)
+    {
+        return output;
+    }
+
+    PriorityQueue<string> pq;
+    Vector<string> keys = source.keys();
+    int size = keys.size();
+    for(int i = 0;i < size;i++)
+    {
+        pq.enqueue(keys[i],source[keys[i]]);
+    }
+    for(int i = 0;i < size - numToKeep;i++)//将次数最小的移出队列
+    {
+        pq.dequeue();
+    }
+    for(int i = 0;i < numToKeep;i++)//将留下来的进行储存
+    {
+        string temp = pq.dequeue();
+        output[temp] = source[temp];
+    }
+    return output;
 }
 
 double cosineSimilarityOf(const Map<string, double>& lhs, const Map<string, double>& rhs) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) lhs;
-    (void) rhs;
-    return {};
+    double return_val = 0;
+    Vector<string> keys_of_lhs = lhs.keys();
+    Vector<string> keys_of_rhs = rhs.keys();
+    int size_of_lhs = keys_of_rhs.size();
+    int size_of_rhs = keys_of_rhs.size();
+    for(int i = 0;i < size_of_lhs;i++)
+    {
+        for(int j = 0;j < size_of_rhs;j++)
+        {
+            if(keys_of_lhs[i] == keys_of_rhs[j])
+            {
+                return_val += lhs[keys_of_lhs[i]] * rhs[keys_of_rhs[j]];
+            }
+        }
+    }
+    return return_val;
 }
 
 string guessLanguageOf(const Map<string, double>& textProfile,
                        const Set<Corpus>& corpora) {
-    /* TODO: Delete this comment and the other lines here, then implement
-     * this function.
-     */
-    (void) textProfile;
-    (void) corpora;
-    return "";
+    int size = corpora.size();
+    if(size == 0)
+    {
+        error("Invalid case");
+    }
+
+    string bestlanguage;
+    double maxsimilarity = -1.0;
+    for(const Corpus& c : corpora)
+    {
+        double sim = cosineSimilarityOf(textProfile,c.profile);
+        if(sim >= maxsimilarity)
+        {
+            maxsimilarity = sim;
+            bestlanguage = c.name;
+        }
+    }
+    return bestlanguage;
 }
 
 
